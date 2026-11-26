@@ -115,6 +115,11 @@ export function makeInstrumentedFetch(real, probe) {
     record.headersAt = Date.now();
     record.status = response.status;
 
+    // 只包装与 LLM 相关的流量：带 ALS 上下文的（我们发起的）或路径像推理端点的。
+    // 其余（web_fetch、下载、插件自己的 HTTP）原样返回，不改变语义、不增加一跳。
+    const relevant = Boolean(record.context) || looksLikeLlm(record.url);
+    if (!relevant) return response;
+
     // 无 body、204/304：原样返回，别碰语义
     if (!response.body || response.status === 204 || response.status === 304) return response;
 

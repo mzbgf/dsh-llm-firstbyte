@@ -84,3 +84,21 @@ test("探针不可见时诊断为 unobserved", () => {
   const diag = diagnoseSilence(null, Date.now(), 30_000);
   assert.equal(diag.kind, "unobserved");
 });
+
+test("非 LLM 流量不被包装，保持原样", async () => {
+  const { server, url } = await listen((req, res) => {
+    res.writeHead(200, { "content-type": "text/plain" });
+    res.end("plain-body");
+  });
+  const probe = installProbe();
+  try {
+    const response = await fetch(url);
+    const record = probe.calls.at(-1);
+    assert.equal(record.headersAt > 0, true, "仍应记账头时刻");
+    assert.equal(record.wrapped, undefined, "不应包装无关流量");
+    assert.equal(await response.text(), "plain-body");
+  } finally {
+    probe.uninstall?.();
+    server.close();
+  }
+});
