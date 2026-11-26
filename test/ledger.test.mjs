@@ -88,6 +88,9 @@ test("配置补丁只接受已知键并做类型纠偏", () => {
     assert.equal("nonsense" in next, false);
     assert.equal(store.read().mode, "guard");
     assert.equal(store.patch({ mode: "whatever" }).mode, "diagnose", "未知模式回落到 diagnose");
+    // 小数型默认值不能被取整：bufferFloor 0.15 取整成 0 会让所有 route 直接判缓冲型
+    assert.equal(store.read().bufferFloor, 0.15);
+    assert.equal(store.patch({ bufferFloor: 0.3 }).bufferFloor, 0.3);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

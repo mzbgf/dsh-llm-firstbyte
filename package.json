@@ -1,6 +1,6 @@
 {
   "name": "@rain/dsh-llm-firstbyte",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "把「请求没发出去」和「上游缓冲/思考」分开：在传输层量响应头与首字节，按 route 学缓冲倾向，给出可执行的首字节预算与超时诊断。",
   "license": "MIT",

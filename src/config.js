@@ -66,8 +66,11 @@ export class ConfigStore {
     // 类型纠偏：外部手改过的文件可能带字符串数字
     for (const [key, fallback] of Object.entries(DEFAULTS)) {
       if (typeof fallback === "number") {
+        // 只有整数型默认值才取整：bufferFloor 是 0.15，取整会变成 0，
+        // 结果是「任何一条缓冲样本都算超阈值」，预算直接跳到 bufferedMs。
         const n = Number(merged[key]);
-        merged[key] = Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
+        if (!Number.isFinite(n)) merged[key] = fallback;
+        else merged[key] = Number.isInteger(fallback) ? Math.round(n) : n;
       } else if (typeof fallback === "boolean") {
         merged[key] = merged[key] !== false;
       } else if (typeof fallback === "string") {
@@ -85,8 +88,7 @@ export class ConfigStore {
       const fallback = DEFAULTS[key];
       if (typeof fallback === "number") {
         const n = Number(raw);
-        if (Number.isFinite(n) && n > 0) next[key] = Math.round(n);
-        else if (raw === 0) next[key] = 0;
+        if (Number.isFinite(n)) next[key] = Number.isInteger(fallback) ? Math.round(n) : n;
       } else if (typeof fallback === "boolean") {
         next[key] = Boolean(raw);
       } else if (key === "mode") {
