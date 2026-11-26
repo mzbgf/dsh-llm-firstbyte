@@ -69,7 +69,8 @@ export class ConfigStore {
         // 只有整数型默认值才取整：bufferFloor 是 0.15，取整会变成 0，
         // 结果是「任何一条缓冲样本都算超阈值」，预算直接跳到 bufferedMs。
         const n = Number(merged[key]);
-        if (!Number.isFinite(n)) merged[key] = fallback;
+        // 落盘的坏值要有出口：默认值为正时，非正值一律回落，别让 0 变成「阈值恒真」
+        if (!Number.isFinite(n) || (fallback > 0 && n <= 0)) merged[key] = fallback;
         else merged[key] = Number.isInteger(fallback) ? Math.round(n) : n;
       } else if (typeof fallback === "boolean") {
         merged[key] = merged[key] !== false;
@@ -88,7 +89,8 @@ export class ConfigStore {
       const fallback = DEFAULTS[key];
       if (typeof fallback === "number") {
         const n = Number(raw);
-        if (Number.isFinite(n)) next[key] = Number.isInteger(fallback) ? Math.round(n) : n;
+        if (!Number.isFinite(n) || (fallback > 0 && n <= 0)) continue;
+        next[key] = Number.isInteger(fallback) ? Math.round(n) : n;
       } else if (typeof fallback === "boolean") {
         next[key] = Boolean(raw);
       } else if (key === "mode") {

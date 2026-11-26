@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -91,6 +91,10 @@ test("配置补丁只接受已知键并做类型纠偏", () => {
     // 小数型默认值不能被取整：bufferFloor 0.15 取整成 0 会让所有 route 直接判缓冲型
     assert.equal(store.read().bufferFloor, 0.15);
     assert.equal(store.patch({ bufferFloor: 0.3 }).bufferFloor, 0.3);
+    assert.equal(store.patch({ bufferFloor: 0 }).bufferFloor, 0.3, "非正值不写入");
+    // 盘上已有坏值 0 时也要回落，否则旧版本写坏的文件会把阈值钉在 0
+    writeFileSync(join(dir, "config.json"), JSON.stringify({ bufferFloor: 0 }));
+    assert.equal(store.read().bufferFloor, 0.15);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
