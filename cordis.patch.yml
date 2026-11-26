@@ -1,0 +1,18 @@
+# dsh bundle patch: 首字节预算与超时诊断。
+# 装成 bundle 后这一行成为 profile 组合的一层；llm/stream 是 waterfall，
+# 对整进程生效（与挂载位置无关），所以策略写在钩子内部按 route 解析。
+#
+# 默认 diagnose：只记录、只告警，不打断请求。先跑几天攒样本，
+# 再用工具 llm_latency_policy {mode:"guard"} 切到会失败重试的模式。
+- insert:
+    - id: llm-firstbyte
+      name: '@rain/dsh-llm-firstbyte'
+      config:
+        enabled: true
+        mode: diagnose
+        hitMs: 30000
+        missMs: 45000
+        bufferedMs: 120000
+        capMs: 300000
+        minSamples: 20
+        bufferFloor: 0.15
